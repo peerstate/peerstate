@@ -1,0 +1,9 @@
+{
+  "name": "peerstate",
+  "version": "0.0.0",
+  "description": "coming soon",
+  "main": "index.js",
+  "repository": "https://github.com/brysgo/peerstate.git",
+  "author": "Bryan Goldstein",
+  "license": "MIT"
+}
