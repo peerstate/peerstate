@@ -1,5 +1,5 @@
 {
-  "name": "peerstate",
+  "name": "@peerstate/core",
   "version": "0.0.1",
   "description": "p2p state management with authentication/authorization/encryption and a drop in key management server",
   "repository": "git@github.com:peerstate/peerstate.git",
@@ -20,7 +20,8 @@
     "fast-json-patch": "^3.0.0-1",
     "jsonwebtoken": "^8.5.1",
     "keypair": "^1.0.1",
-    "path-to-regexp": "^6.1.0"
+    "path-to-regexp": "^6.1.0",
+    "uuid": "^7.0.3"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^8.3.8",

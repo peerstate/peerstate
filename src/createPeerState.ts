@@ -15,16 +15,14 @@ type InternalState<T> = {
 
 // TODO: handle case where token expires
 export const createPeerState = function <StateTreeType>(
-  initialState: StateTreeType,
   authFilter: AuthFilter<StateTreeType>,
   encryptionFilter: EncryptionFilter<StateTreeType>,
   keychain: Keychain
 ) {
-  let state: InternalState<StateTreeType> = {
-    peerState: initialState,
-    keys: keychain,
-  };
-  const dispatch = function (action: Action) {
+  const nextState = function (
+    state: InternalState<StateTreeType>,
+    action: Action
+  ) {
     // TODO: ensure keys exist in keychain
     const serverPublicKey = keychain.getServerPublicKey();
     const operation = authFilter(
@@ -42,7 +40,7 @@ export const createPeerState = function <StateTreeType>(
       peerState: jsonPatchReducer<StateTreeType>(state.peerState, operation),
     };
   };
-  const sign = (op: Operation) => {
+  const sign = (state: InternalState<StateTreeType>, op: Operation) => {
     if (typeof keychain.getSignedPublicKey() !== "string") {
       throw new Error("signed public key is not available, try again later");
     }
@@ -60,5 +58,5 @@ export const createPeerState = function <StateTreeType>(
       keychain.getSecretForEncryptionGroup
     );
   };
-  return { state: initialState, dispatch, sign };
+  return { nextState, sign };
 };
