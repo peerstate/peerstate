@@ -44,6 +44,18 @@ export class Keychain {
     }
     return this;
   }
+  signup(name: string, email: string, password: string) {
+    return fetch(`${this.url}/signup`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email,
+        name,
+        password,
+      }),
+    });
+  }
   login(email: string, password: string) {
     return fetch(`${this.url}/login`, {
       method: "POST",
@@ -51,15 +63,15 @@ export class Keychain {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         email,
-        password
-      })
+        password,
+      }),
     });
   }
   logout() {
     return fetch(`${this.url}/logout`, {
       method: "POST",
       credentials: "include",
-      headers: { "content-type": "application/json" }
+      headers: { "content-type": "application/json" },
     }).then(() => window.localStorage.setItem(SERIALIZATION_KEY, "{}"));
   }
   newKeypair() {
@@ -69,15 +81,15 @@ export class Keychain {
       credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        publicKey: keypair.public
-      })
+        publicKey: keypair.public,
+      }),
     })
-      .then(res => res.json())
-      .then(res => {
+      .then((res) => res.json())
+      .then((res) => {
         Object.assign(this, {
           signedPublicKey: res.token,
           serverPublicKey: res.serverPublicKey,
-          privateKey: keypair.private
+          privateKey: keypair.private,
         });
         this.serialize();
         return this;
@@ -91,10 +103,10 @@ export class Keychain {
       body: JSON.stringify({
         userIds: secretGroup.split(","),
         keyId: keyId || this.id,
-        secret: crypto.randomBytes(16).toString("hex")
-      })
+        secret: crypto.randomBytes(16).toString("hex"),
+      }),
     })
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(
         (res: SharedSecretResponse) => (
           ((this as any)[res.key] = res.secret), this.serialize(), res.secret
@@ -118,15 +130,10 @@ export class Keychain {
     }
     return {
       id,
-      secret: (this as any)[encryptionGroupWithId]
+      secret: (this as any)[encryptionGroupWithId],
     };
   };
   getServerPublicKey() {
-    if (!this.serverPublicKey) {
-      // TODO: retry things when condition hit
-      this.newKeypair();
-      return "";
-    }
     return this.serverPublicKey;
   }
   getPrivateKey() {
@@ -138,16 +145,12 @@ export class Keychain {
     return this.privateKey;
   }
   getUserInfo() {
-    return (JSON.parse(
-      atob(this.getSignedPublicKey().split(".")[1])
-    ) as IdentifyInfo).user; // FIXME: use jwt for this
+    const signedPublicKey = this.getSignedPublicKey();
+    if (!signedPublicKey) return null;
+    return (JSON.parse(atob(signedPublicKey.split(".")[1])) as IdentifyInfo)
+      .user; // FIXME: use jwt for this
   }
   getSignedPublicKey() {
-    if (!this.signedPublicKey) {
-      // TODO: retry things when condition hit
-      this.newKeypair();
-      return "";
-    }
     return this.signedPublicKey;
   }
 }
