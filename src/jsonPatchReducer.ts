@@ -1,6 +1,6 @@
 import { Operation, Validator, applyOperation } from "fast-json-patch";
 
-export const jsonPatchReducer = function<T>(
+export const jsonPatchReducer = function <T>(
   state: T,
   action: Operation,
   validator?: Validator<T>

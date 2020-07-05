@@ -44,7 +44,10 @@ export const createPeerState = function <StateTreeType>(
     if (typeof keychain.getSignedPublicKey() !== "string") {
       throw new Error("signed public key is not available, try again later");
     }
-    const senderId = keychain.getUserInfo().id;
+    const senderId = keychain.getUserInfo()?.id;
+    if (!senderId) {
+      throw new Error("problem getting user from signed public key");
+    }
     return encryptionFilter(
       state.peerState,
       {

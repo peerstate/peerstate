@@ -12,7 +12,7 @@ type AuthorizationRules<T> = {
 };
 // TODO: wrap operation with something that has positional info
 // TODO: handle case where token expires
-export const createAuthFilter = function<T>(
+export const createAuthFilter = function <T>(
   rules: AuthorizationRules<T>
 ): AuthFilter<T> {
   const compiledRules = Object.entries(rules).map(([path, filterFn]): [
@@ -37,6 +37,8 @@ export const createAuthFilter = function<T>(
             result: boolean | undefined,
             [pathMatcher, filterFn]
           ): boolean | undefined => {
+            // block copy and move until we permission check "from"
+            if (["copy", "move"].includes(operation.op)) return false;
             const pathMatchResult = pathMatcher(operation.path);
             if (result !== undefined || !pathMatchResult) return result;
             return filterFn(senderId, state, operation, pathMatchResult);
