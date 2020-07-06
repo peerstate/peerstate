@@ -5,6 +5,8 @@ import {
   createEncryptionFilter,
   createAuthFilter,
   Action,
+  withRetries,
+  isRetryCondition,
 } from "./";
 
 type StateTreeType = any;
@@ -20,7 +22,6 @@ if (!globalThis.Response) {
 
 const peerstateForUser = ({ name }: { name: string }) => {
   const keychain: Keychain = createMockKeychain();
-  // let userId: string | undefined = keychain.getUserInfo()?.id;
   const { myAuthFilter, myEncryptionFilter } = {
     /**
      * Authorization Filters
@@ -31,8 +32,10 @@ const peerstateForUser = ({ name }: { name: string }) => {
      */
     myAuthFilter: createAuthFilter<StateTreeType>({
       "/public/:any+": () => true,
-      "/users/:userId": (...args) => (console.log(args), true),
-      "/group/:groupId": (...args) => (console.log(args), true),
+      "/users/:userId/:any*": (senderId, state, op, match) =>
+        senderId === (match.params as any).userId,
+      "/group/:groupId/:any*": (senderId, state, op, match) =>
+        (match.params as any).groupId.split(",").includes(senderId),
     }),
 
     /**
@@ -43,31 +46,38 @@ const peerstateForUser = ({ name }: { name: string }) => {
      * 3. to encrypt return a list of user ID's that can see the information
      */
     myEncryptionFilter: createEncryptionFilter<StateTreeType>({
-      "/group/:groupId": (...args) => (console.log(args), ["2"]),
+      "/group/:groupId/:any*": (state, action, match) =>
+        (match.params as any).groupId.split(","),
     }),
   };
-  const { nextState, sign } = createPeerState<StateTreeType>(
-    myAuthFilter,
-    myEncryptionFilter,
-    keychain
+  const { nextState, sign } = withRetries<StateTreeType>(
+    createPeerState<StateTreeType>(myAuthFilter, myEncryptionFilter, keychain)
   );
   return { nextState, sign, keychain, name };
 };
 
 describe("bob, alice, and eve", () => {
   let bob: any, alice: any, eve: any;
-  const dispatch = (state: any, action: Action) => {
-    state.alice = alice.nextState(state.alice, action);
-    state.bob = bob.nextState(state.bob, action);
-    state.eve = eve.nextState(state.eve, action);
+  const dispatch = async (state: any, action: Action) => {
+    const r = await Promise.all([
+      alice.nextState(state.alice, action),
+      bob.nextState(state.bob, action),
+      eve.nextState(state.eve, action),
+    ]);
+    state.alice = r[0];
+    state.bob = r[1];
+    state.eve = r[2];
+    return state;
   };
   beforeAll(async () => {
     bob = peerstateForUser({ name: "bob" });
     alice = peerstateForUser({ name: "alice" });
     eve = peerstateForUser({ name: "eve" });
-    await bob.keychain.login("bob@example.com", "password1");
-    await alice.keychain.login("alice@example.com", "password1");
-    await eve.keychain.login("eve@example.com", "password1");
+    await Promise.all([
+      bob.keychain.login("bob@example.com", "password1"),
+      alice.keychain.login("alice@example.com", "password1"),
+      eve.keychain.login("eve@example.com", "password1"),
+    ]);
     await bob.keychain.newKeypair();
     await alice.keychain.newKeypair();
     await eve.keychain.newKeypair();
@@ -90,5 +100,27 @@ describe("bob, alice, and eve", () => {
     ["alice", "bob", "eve"].forEach((name) =>
       expect(state[name]?.peerState?.public?.bob).toEqual("hello from bob")
     );
+  });
+
+  test("alice and bob can chat without worrying about eve", async () => {
+    let state = {
+      alice: { peerState: { group: {} } },
+      bob: { peerState: { group: {} } },
+      eve: { peerState: { group: {} } },
+    };
+
+    const signedAction = await bob.sign(state.bob, {
+      op: "add",
+      path: "/group/alice@example.com,bob@example.com",
+      value: "shh alice this is a secret",
+    });
+    expect(isRetryCondition(signedAction)).toBeFalsy();
+    await dispatch(state, signedAction);
+    ["alice", "bob"].forEach((name) =>
+      expect(
+        state[name]?.peerState?.group["alice@example.com,bob@example.com"]
+      ).toEqual("shh alice this is a secret")
+    );
+    expect(state.eve.peerState.group).toEqual({});
   });
 });

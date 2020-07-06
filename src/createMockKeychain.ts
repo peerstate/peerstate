@@ -1,7 +1,7 @@
 import generateRSAKeypair from "keypair";
 import crypto from "crypto";
 import { v4 as uuid } from "uuid";
-import { IdentifyInfo } from ".";
+import { IdentifyInfo, RetryCondition } from ".";
 import jwt from "jsonwebtoken";
 
 declare global {
@@ -9,6 +9,7 @@ declare global {
   var secretsByUserIds: any;
 }
 
+globalThis.secretsByUserIds = globalThis.secretsByUserIds || {};
 globalThis.mockServerKeypair =
   globalThis.mockServerKeypair || generateRSAKeypair();
 
@@ -95,18 +96,17 @@ export class MockKeychain {
   }
   fetchOrCreateSecret(secretGroup: string, keyId?: string) {
     const userIdsRaw = secretGroup.split(",");
-    const secret = crypto.randomBytes(16).toString("hex");
     if (this.user === null) throw new Error("No logged in user");
-    const userIds = [
-      ...userIdsRaw.filter((uid) => uid !== this.user?.id),
-      this.user.id,
-    ].sort();
+    if (!userIdsRaw.includes(this.user.id)) return Promise.resolve(false);
+    const userIds = userIdsRaw.sort();
     if (keyId) userIds.push(keyId);
 
     const userIdString = userIds.join(",");
-    secretsByUserIds = secretsByUserIds[userIdString] || secret;
-
-    return Promise.resolve(secretsByUserIds[userIdString]);
+    globalThis.secretsByUserIds[userIdString] =
+      globalThis.secretsByUserIds[userIdString] ||
+      crypto.randomBytes(16).toString("hex");
+    (this as any)[userIdString] = globalThis.secretsByUserIds[userIdString];
+    return Promise.resolve((this as any)[userIdString]);
   }
   rotateKeys() {
     this.id = uuid();
@@ -115,13 +115,20 @@ export class MockKeychain {
   getSecretForEncryptionGroup = (
     encryptionGroup: string,
     keyId?: string
-  ): SecretKey | null => {
+  ): SecretKey | RetryCondition | false => {
     const id = keyId || this.id;
+    const userIdsRaw = encryptionGroup.split(",");
+    if (!this.user) {
+      throw new Error("Not logged in!");
+    }
+    if (!userIdsRaw.includes(this.user.id)) return false;
     const encryptionGroupWithId = [encryptionGroup, id].join(",");
+
     if (!(this as any)[encryptionGroupWithId]) {
-      // TODO: retry things when condition hit
-      this.fetchOrCreateSecret(encryptionGroup, id);
-      return null;
+      return {
+        error: new Error("no secret exists for encryption group"),
+        afterPromise: this.fetchOrCreateSecret(encryptionGroup, id),
+      };
     }
     return {
       id,

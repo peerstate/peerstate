@@ -1,6 +1,13 @@
 import { Operation } from "fast-json-patch";
 import { match, MatchFunction, MatchResult } from "path-to-regexp";
-import { authenticateAction, Action, AuthFilter, GetSecret } from "./";
+import {
+  authenticateAction,
+  Action,
+  AuthFilter,
+  GetSecret,
+  isRetryCondition,
+  RetryCondition,
+} from "./";
 
 type AuthorizationRules<T> = {
   [key: string]: (
@@ -24,14 +31,22 @@ export const createAuthFilter = function <T>(
     action: Action,
     serverPublicKey: string,
     secretForEncryptionGroup: GetSecret
-  ): Operation | false {
+  ): Operation | RetryCondition | false {
     try {
-      const { senderId, operation } = authenticateAction(
+      const authenticationResult = authenticateAction(
         action,
         serverPublicKey,
         secretForEncryptionGroup
       );
-      return (
+      if (authenticationResult === false) {
+        return false;
+      }
+      if (isRetryCondition(authenticationResult)) {
+        return authenticationResult;
+      }
+      const { senderId, operation } = authenticationResult;
+
+      const result =
         (compiledRules.reduce(
           (
             result: boolean | undefined,
@@ -46,8 +61,11 @@ export const createAuthFilter = function <T>(
           undefined
         ) ||
           false) &&
-        operation
-      );
+        operation;
+      if (result === false) {
+        console.warn(`UNAUTHORIZED: action was blocked`, { action });
+      }
+      return result;
     } catch (e) {
       console.error(e);
       return false;

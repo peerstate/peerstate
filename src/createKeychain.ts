@@ -1,7 +1,7 @@
 import generateRSAKeypair from "keypair";
 import crypto from "crypto";
 import { v4 as uuid } from "uuid";
-import { IdentifyInfo } from ".";
+import { IdentifyInfo, RetryCondition } from ".";
 
 const SERIALIZATION_KEY = "peerStateKeychain";
 
@@ -96,12 +96,13 @@ export class Keychain {
       });
   }
   fetchOrCreateSecret(secretGroup: string, keyId?: string) {
+    const userIdsRaw = secretGroup.split(",");
     return fetch(`${this.url}/sharedSecret`, {
       method: "POST",
       credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        userIds: secretGroup.split(","),
+        userIds: userIdsRaw,
         keyId: keyId || this.id,
         secret: crypto.randomBytes(16).toString("hex"),
       }),
@@ -120,13 +121,14 @@ export class Keychain {
   getSecretForEncryptionGroup = (
     encryptionGroup: string,
     keyId?: string
-  ): SecretKey | null => {
+  ): SecretKey | RetryCondition | false => {
     const id = keyId || this.id;
     const encryptionGroupWithId = [encryptionGroup, id].join(",");
     if (!(this as any)[encryptionGroupWithId]) {
-      // TODO: retry things when condition hit
-      this.fetchOrCreateSecret(encryptionGroup, id);
-      return null;
+      return {
+        error: new Error("no secret exists for encryption group"),
+        afterPromise: this.fetchOrCreateSecret(encryptionGroup, id),
+      };
     }
     return {
       id,

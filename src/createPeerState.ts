@@ -6,11 +6,22 @@ import {
   jsonPatchReducer,
   Keychain,
   Action,
+  isRetryCondition,
+  RetryCondition,
 } from "./";
 
-type InternalState<T> = {
+export type PeerStateClient<T> = {
+  nextState: (
+    state: InternalState<T>,
+    action: Action | RetryCondition
+  ) => InternalState<T>;
+  sign: (state: InternalState<T>, op: Operation) => Action | RetryCondition;
+};
+
+export type InternalState<T> = {
   peerState: T;
   keys: Keychain;
+  retryCondition?: RetryCondition;
 };
 
 // TODO: handle case where token expires
@@ -18,12 +29,14 @@ export const createPeerState = function <StateTreeType>(
   authFilter: AuthFilter<StateTreeType>,
   encryptionFilter: EncryptionFilter<StateTreeType>,
   keychain: Keychain
-) {
+): PeerStateClient<StateTreeType> {
   const nextState = function (
     state: InternalState<StateTreeType>,
-    action: Action
-  ) {
-    // TODO: ensure keys exist in keychain
+    action: Action | RetryCondition
+  ): InternalState<StateTreeType> {
+    if (isRetryCondition(action)) {
+      return { ...state, retryCondition: action };
+    }
     const serverPublicKey = keychain.getServerPublicKey();
     const operation = authFilter(
       state.peerState,
@@ -31,8 +44,13 @@ export const createPeerState = function <StateTreeType>(
       serverPublicKey,
       keychain.getSecretForEncryptionGroup
     );
+    if (isRetryCondition(operation)) {
+      return {
+        ...state,
+        retryCondition: operation,
+      };
+    }
     if (!operation) {
-      console.warn(`UNAUTHORIZED: action was blocked`, { action });
       return state;
     }
     return {
@@ -40,7 +58,10 @@ export const createPeerState = function <StateTreeType>(
       peerState: jsonPatchReducer<StateTreeType>(state.peerState, operation),
     };
   };
-  const sign = (state: InternalState<StateTreeType>, op: Operation) => {
+  const sign = (
+    state: InternalState<StateTreeType>,
+    op: Operation
+  ): Action | RetryCondition => {
     if (typeof keychain.getSignedPublicKey() !== "string") {
       throw new Error("signed public key is not available, try again later");
     }

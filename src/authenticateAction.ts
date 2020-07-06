@@ -1,13 +1,19 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { Operation } from "fast-json-patch";
-import { Action, IdentifyInfo, GetSecret } from "./";
+import {
+  Action,
+  IdentifyInfo,
+  GetSecret,
+  RetryCondition,
+  isRetryCondition,
+} from "./";
 
 export const authenticateAction = function (
   action: Action,
   serverPublicKey: string,
   secretForEncryptionGroup: GetSecret
-): { senderId: string; operation: Operation } {
+): { senderId: string; operation: Operation } | RetryCondition | false {
   const senderInfo = jwt.verify(action.senderToken, serverPublicKey, {
     algorithms: ["RS256"], // TODO: use more secure keys
   }) as IdentifyInfo;
@@ -21,9 +27,9 @@ export const authenticateAction = function (
       action.encryptionGroup,
       action.secretKeyId
     );
-    if (!secret) {
-      // FIXME: make sure this properly retries
-      throw new Error("secret is not available");
+    if (secret === false) return false;
+    if (isRetryCondition(secret)) {
+      return secret;
     }
     const cipher = crypto.createDecipheriv(
       "aes-128-ofb",

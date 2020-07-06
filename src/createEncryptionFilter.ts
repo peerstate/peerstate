@@ -1,7 +1,13 @@
 import { Operation } from "fast-json-patch";
 import { match, MatchFunction, MatchResult } from "path-to-regexp";
 import crypto from "crypto";
-import { Action, EncryptionFilter, GetSecret } from "./";
+import {
+  Action,
+  EncryptionFilter,
+  GetSecret,
+  isRetryCondition,
+  RetryCondition,
+} from "./";
 
 type EncryptionRules<T> = {
   [key: string]: (
@@ -23,7 +29,7 @@ export const createEncryptionFilter = function <T>(
     operation: Operation,
     senderId: string,
     secretForEncryptionGroup: GetSecret
-  ): Action {
+  ): Action | RetryCondition {
     const encryptionGroupIds = compiledRules.reduce(
       (result: string[], [pathMatcher, filterFn]): string[] => {
         const pathMatchResult = pathMatcher(operation.path);
@@ -41,9 +47,8 @@ export const createEncryptionFilter = function <T>(
         .join(",");
       const secretKey = secretForEncryptionGroup(encryptionGroup);
 
-      if (!secretKey) {
-        // FIXME: retry action on failure
-        throw new Error("secret key not available");
+      if (isRetryCondition(secretKey)) {
+        return secretKey;
       }
       const { id: secretKeyId, secret } = secretKey;
       const iv = crypto.randomBytes(16).toString("hex");

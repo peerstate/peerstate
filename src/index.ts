@@ -28,6 +28,7 @@ export { jsonPatchReducer } from "./jsonPatchReducer";
 export { authenticateAction } from "./authenticateAction";
 export { createEncryptionFilter } from "./createEncryptionFilter";
 export { createKeychain, Keychain } from "./createKeychain";
+export { withRetries } from "./withRetries";
 
 export type Action = {
   senderToken: string;
@@ -50,7 +51,7 @@ export type AuthFilter<T> = (
   action: Action,
   serverPublicKey: string,
   secretForEncryptionGroup: GetSecret
-) => Operation | false;
+) => Operation | RetryCondition | false;
 
 export type EncryptionFilter<T> = (
   state: T,
@@ -58,9 +59,28 @@ export type EncryptionFilter<T> = (
   operation: Operation,
   senderId: string,
   secretForEncryptionGroup: GetSecret
-) => Action;
+) => Action | RetryCondition;
 
 export type GetSecret = (
   encryptionGroup: string,
   secretKeyId?: string
-) => SecretKey | null;
+) => SecretKey | RetryCondition | false;
+
+export type RetryCondition<T = any> = {
+  error: Error;
+  afterPromise: Promise<T>;
+};
+
+export function isRetryCondition(
+  toBeDetermined: any | RetryCondition
+): toBeDetermined is RetryCondition {
+  const retryCondition = toBeDetermined as RetryCondition;
+  if (
+    typeof retryCondition === "object" &&
+    "error" in retryCondition &&
+    "afterPromise" in retryCondition
+  ) {
+    return true;
+  }
+  return false;
+}
