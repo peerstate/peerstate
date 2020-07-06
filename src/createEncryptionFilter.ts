@@ -29,7 +29,7 @@ export const createEncryptionFilter = function <T>(
     operation: Operation,
     senderId: string,
     secretForEncryptionGroup: GetSecret
-  ): Action | RetryCondition {
+  ): Action | RetryCondition | false {
     const encryptionGroupIds = compiledRules.reduce(
       (result: string[], [pathMatcher, filterFn]): string[] => {
         const pathMatchResult = pathMatcher(operation.path);
@@ -46,7 +46,9 @@ export const createEncryptionFilter = function <T>(
         .sort()
         .join(",");
       const secretKey = secretForEncryptionGroup(encryptionGroup);
-
+      if (secretKey === false) {
+        return false;
+      }
       if (isRetryCondition(secretKey)) {
         return secretKey;
       }

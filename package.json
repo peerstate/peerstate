@@ -10,7 +10,8 @@
   "jsnext:main": "build/index.es.js",
   "scripts": {
     "build": "rollup -c",
-    "test": "jest"
+    "test": "jest",
+    "prepublish": "yarn build"
   },
   "files": [
     "build"

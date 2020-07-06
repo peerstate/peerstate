@@ -13,9 +13,12 @@ import {
 export type PeerStateClient<T> = {
   nextState: (
     state: InternalState<T>,
-    action: Action | RetryCondition
+    action: Action | RetryCondition | false
   ) => InternalState<T>;
-  sign: (state: InternalState<T>, op: Operation) => Action | RetryCondition;
+  sign: (
+    state: InternalState<T>,
+    op: Operation
+  ) => Action | RetryCondition | false;
 };
 
 export type InternalState<T> = {
@@ -32,8 +35,11 @@ export const createPeerState = function <StateTreeType>(
 ): PeerStateClient<StateTreeType> {
   const nextState = function (
     state: InternalState<StateTreeType>,
-    action: Action | RetryCondition
+    action: Action | RetryCondition | false
   ): InternalState<StateTreeType> {
+    if (action === false) {
+      return state;
+    }
     if (isRetryCondition(action)) {
       return { ...state, retryCondition: action };
     }
@@ -61,7 +67,7 @@ export const createPeerState = function <StateTreeType>(
   const sign = (
     state: InternalState<StateTreeType>,
     op: Operation
-  ): Action | RetryCondition => {
+  ): Action | RetryCondition | false => {
     if (typeof keychain.getSignedPublicKey() !== "string") {
       throw new Error("signed public key is not available, try again later");
     }

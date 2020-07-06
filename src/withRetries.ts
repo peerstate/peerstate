@@ -5,16 +5,16 @@ import { Operation } from "fast-json-patch";
 export type AsyncPeerStateClient<T> = {
   nextState: (
     state: InternalState<T>,
-    action: Action
+    action: Action | false
   ) => Promise<InternalState<T>>;
-  sign: (state: InternalState<T>, op: Operation) => Promise<Action>;
+  sign: (state: InternalState<T>, op: Operation) => Promise<Action | false>;
 };
 
 export const withRetries = function <T>(
   client: PeerStateClient<T>,
   maxRetries: number = 5
 ): AsyncPeerStateClient<T> {
-  const nextState = async (state: InternalState<T>, action: Action) => {
+  const nextState = async (state: InternalState<T>, action: Action | false) => {
     let result = state;
     for (var i = 0; i < maxRetries + 1; i++) {
       delete result.retryCondition;
@@ -34,9 +34,9 @@ export const withRetries = function <T>(
   const sign = async (
     state: InternalState<T>,
     op: Operation
-  ): Promise<Action> => {
+  ): Promise<Action | false> => {
     let i = -1;
-    let response;
+    let response: Action | RetryCondition | false;
     do {
       i++;
       response = client.sign(state, op);

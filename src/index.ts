@@ -59,7 +59,7 @@ export type EncryptionFilter<T> = (
   operation: Operation,
   senderId: string,
   secretForEncryptionGroup: GetSecret
-) => Action | RetryCondition;
+) => Action | RetryCondition | false;
 
 export type GetSecret = (
   encryptionGroup: string,
