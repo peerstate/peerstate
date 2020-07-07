@@ -1,4 +1,3 @@
-import { Operation } from "fast-json-patch";
 import jwt from "jsonwebtoken";
 import {
   AuthFilter,
@@ -8,6 +7,7 @@ import {
   Action,
   isRetryCondition,
   RetryCondition,
+  Operation,
 } from "./";
 
 export type PeerStateClient<T> = {

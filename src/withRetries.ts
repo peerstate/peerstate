@@ -1,6 +1,5 @@
 import { InternalState, PeerStateClient } from "./createPeerState";
-import { Action, RetryCondition, isRetryCondition } from ".";
-import { Operation } from "fast-json-patch";
+import { Action, RetryCondition, isRetryCondition, Operation } from ".";
 
 export type AsyncPeerStateClient<T> = {
   nextState: (

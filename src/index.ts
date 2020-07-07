@@ -20,7 +20,6 @@
 [ ] 9. Refactor and open source
 */
 
-import { Operation } from "fast-json-patch";
 import { SecretKey } from "./createKeychain";
 export { createPeerState } from "./createPeerState";
 export { createAuthFilter } from "./createAuthFilter";
@@ -28,6 +27,7 @@ export { jsonPatchReducer } from "./jsonPatchReducer";
 export { authenticateAction } from "./authenticateAction";
 export { createEncryptionFilter } from "./createEncryptionFilter";
 export { createKeychain, Keychain } from "./createKeychain";
+export { createMockKeychain, MockKeychain } from "./createMockKeychain";
 export { withRetries } from "./withRetries";
 
 export type Action = {
@@ -84,3 +84,32 @@ export function isRetryCondition(
   }
   return false;
 }
+
+export interface BaseOperation {
+  path: string;
+}
+
+export interface AddOperation<T> extends BaseOperation {
+  op: "add";
+  value: T;
+}
+
+export interface RemoveOperation extends BaseOperation {
+  op: "remove";
+}
+
+export interface ReplaceOperation<T> extends BaseOperation {
+  op: "replace";
+  value: T;
+}
+
+export interface TestOperation<T> extends BaseOperation {
+  op: "test";
+  value: T;
+}
+
+export type Operation =
+  | AddOperation<any>
+  | RemoveOperation
+  | ReplaceOperation<any>
+  | TestOperation<any>;

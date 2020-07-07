@@ -1,4 +1,5 @@
-import { Operation, Validator, applyOperation } from "fast-json-patch";
+import { Operation } from "./";
+import { Validator, applyOperation } from "fast-json-patch";
 
 export const jsonPatchReducer = function <T>(
   state: T,

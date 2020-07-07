@@ -1,4 +1,3 @@
-import { Operation } from "fast-json-patch";
 import { match, MatchFunction, MatchResult } from "path-to-regexp";
 import crypto from "crypto";
 import {
@@ -7,6 +6,7 @@ import {
   GetSecret,
   isRetryCondition,
   RetryCondition,
+  Operation,
 } from "./";
 
 type EncryptionRules<T> = {

@@ -1,12 +1,12 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import { Operation } from "fast-json-patch";
 import {
   Action,
   IdentifyInfo,
   GetSecret,
   RetryCondition,
   isRetryCondition,
+  Operation,
 } from "./";
 
 export const authenticateAction = function (
