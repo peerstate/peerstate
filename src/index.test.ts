@@ -20,6 +20,8 @@ if (!globalThis.Response) {
   eval("globalThis.Response = require('node-fetch').Response");
 }
 
+type MatchParams = { userId: string; groupId: string; any: string[] };
+
 const peerstateForUser = ({ name }: { name: string }) => {
   const keychain: Keychain = createMockKeychain();
   const { myAuthFilter, myEncryptionFilter } = {
@@ -30,12 +32,12 @@ const peerstateForUser = ({ name }: { name: string }) => {
      * 2. check who is trying to access
      * 3. return true if they are allowed
      */
-    myAuthFilter: createAuthFilter<StateTreeType>({
+    myAuthFilter: createAuthFilter<StateTreeType, MatchParams>({
       "/public/:any+": () => true,
       "/users/:userId/:any*": (senderId, state, op, match) =>
-        senderId === (match.params as any).userId,
+        senderId === match.params.userId,
       "/group/:groupId/:any*": (senderId, state, op, match) =>
-        (match.params as any).groupId.split(",").includes(senderId),
+        match.params.groupId.split(",").includes(senderId),
     }),
 
     /**
@@ -45,9 +47,9 @@ const peerstateForUser = ({ name }: { name: string }) => {
      * 2. return false if there is no need to encrypt
      * 3. to encrypt return a list of user ID's that can see the information
      */
-    myEncryptionFilter: createEncryptionFilter<StateTreeType>({
+    myEncryptionFilter: createEncryptionFilter<StateTreeType, MatchParams>({
       "/group/:groupId/:any*": (state, action, match) =>
-        (match.params as any).groupId.split(","),
+        match.params.groupId.split(","),
     }),
   };
   const { nextState, sign } = withRetries<StateTreeType>(

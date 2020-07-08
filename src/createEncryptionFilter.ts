@@ -9,20 +9,20 @@ import {
   Operation,
 } from "./";
 
-type EncryptionRules<T> = {
+type EncryptionRules<T, R extends object = object> = {
   [key: string]: (
     state: T,
     action: Operation,
-    params: MatchResult
+    params: MatchResult<R>
   ) => undefined | null | string[];
 };
-export const createEncryptionFilter = function <T>(
-  rules: EncryptionRules<T>
+export const createEncryptionFilter = function <T, R extends object = object>(
+  rules: EncryptionRules<T, R>
 ): EncryptionFilter<T> {
   const compiledRules = Object.entries(rules).map(([path, filterFn]): [
-    MatchFunction,
+    MatchFunction<R>,
     typeof filterFn
-  ] => [match(path, { decode: decodeURIComponent }), filterFn]);
+  ] => [match<R>(path, { decode: decodeURIComponent }), filterFn]);
   return function encryptionFilter(
     state: T,
     action: Action,

@@ -9,23 +9,23 @@ import {
   Operation,
 } from "./";
 
-type AuthorizationRules<T> = {
+type AuthorizationRules<T, R extends object = object> = {
   [key: string]: (
     senderId: string,
     state: T,
     action: Operation,
-    params: MatchResult
+    params: MatchResult<R>
   ) => boolean;
 };
 // TODO: wrap operation with something that has positional info
 // TODO: handle case where token expires
-export const createAuthFilter = function <T>(
-  rules: AuthorizationRules<T>
+export const createAuthFilter = function <T, R extends object = object>(
+  rules: AuthorizationRules<T, R>
 ): AuthFilter<T> {
   const compiledRules = Object.entries(rules).map(([path, filterFn]): [
-    MatchFunction,
+    MatchFunction<R>,
     typeof filterFn
-  ] => [match(path, { decode: decodeURIComponent }), filterFn]);
+  ] => [match<R>(path, { decode: decodeURIComponent }), filterFn]);
   return function authFilter(
     state: T,
     action: Action,
