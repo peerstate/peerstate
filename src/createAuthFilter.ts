@@ -1,4 +1,5 @@
 import { match, MatchFunction, MatchResult } from "path-to-regexp";
+import { jsonPatchFlat } from "./jsonPatchFlat";
 import {
   authenticateAction,
   Action,
@@ -46,17 +47,25 @@ export const createAuthFilter = function <T, R extends object = object>(
       }
       const { senderId, operation } = authenticationResult;
 
-      const result =
-        (compiledRules.reduce(
-          (
-            result: boolean | undefined,
-            [pathMatcher, filterFn]
-          ): boolean | undefined => {
+      const flattenedOperations = jsonPatchFlat(operation);
+
+      const result: boolean | Operation =
+        ([operation, ...flattenedOperations].reduce(
+          (result2: boolean | undefined, o: Operation) => {
             // block copy and move until we permission check "from"
             if (["copy", "move"].includes(operation.op)) return false;
-            const pathMatchResult = pathMatcher(operation.path);
-            if (result !== undefined || !pathMatchResult) return result;
-            return filterFn(senderId, state, operation, pathMatchResult);
+            if (result2 === false) return result2;
+            return compiledRules.reduce(
+              (
+                result: boolean | undefined,
+                [pathMatcher, filterFn]
+              ): boolean | undefined => {
+                const pathMatchResult = pathMatcher(o.path);
+                if (result === false || !pathMatchResult) return result;
+                return filterFn(senderId, state, o, pathMatchResult) ?? result;
+              },
+              undefined
+            );
           },
           undefined
         ) ||

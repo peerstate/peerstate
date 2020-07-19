@@ -17,19 +17,19 @@ export const jsonPatchFlat = (action: Operation): Operation[] => {
       );
     },
     remove: () => {
-      return [action];
+      return [];
     },
     replace: () => {
-      return [action];
+      return [];
     },
     move: () => {
-      return [action];
+      return [];
     },
     copy: () => {
-      return [action];
+      return [];
     },
     test: () => {
-      return [action];
+      return [];
     },
   }[action.op]();
 };
