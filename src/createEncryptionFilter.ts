@@ -16,6 +16,7 @@ type EncryptionRules<T, R extends object = object> = {
     params: MatchResult<R>
   ) => undefined | null | string[];
 };
+// TODO: handle partial encryption of nested objects (like authorization)
 export const createEncryptionFilter = function <T, R extends object = object>(
   rules: EncryptionRules<T, R>
 ): EncryptionFilter<T> {

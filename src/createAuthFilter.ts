@@ -47,7 +47,7 @@ export const createAuthFilter = function <T, R extends object = object>(
       }
       const { senderId, operation } = authenticationResult;
 
-      const flattenedOperations = jsonPatchFlat(operation);
+      const flattenedOperations = jsonPatchFlat(operation, state);
 
       const result: boolean | Operation =
         ([operation, ...flattenedOperations].reduce(

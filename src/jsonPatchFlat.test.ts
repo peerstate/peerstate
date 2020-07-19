@@ -19,7 +19,7 @@ describe("jsonPatchFlat", () => {
       ],
     };
     const action: Operation = { op: "add", path: "/public/bob", value: input };
-    expect(jsonPatchFlat(action)).toMatchInlineSnapshot(`
+    expect(jsonPatchFlat(action, {})).toMatchInlineSnapshot(`
       Array [
         Object {
           "op": "add",
@@ -50,6 +50,44 @@ describe("jsonPatchFlat", () => {
           "op": "add",
           "path": "/public/bob/baz/2/key",
           "value": 6,
+        },
+      ]
+    `);
+  });
+  it("turns an 'remove' operation into many flattened operations from target state", () => {
+    const state = {
+      foo: 1,
+      bar: {
+        deep: {
+          key: 2,
+        },
+      },
+      baz: [
+        3,
+        [4, 5],
+        {
+          key: 6,
+        },
+      ],
+    };
+    const action: Operation = { op: "remove", path: "/baz" };
+    expect(jsonPatchFlat(action, state)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "op": "remove",
+          "path": "/baz/0",
+        },
+        Object {
+          "op": "remove",
+          "path": "/baz/1/0",
+        },
+        Object {
+          "op": "remove",
+          "path": "/baz/1/1",
+        },
+        Object {
+          "op": "remove",
+          "path": "/baz/2/key",
         },
       ]
     `);
