@@ -31,7 +31,8 @@ export type InternalState<T> = {
 export const createPeerState = function <StateTreeType>(
   authFilter: AuthFilter<StateTreeType>,
   encryptionFilter: EncryptionFilter<StateTreeType>,
-  keychain: Keychain
+  keychain: Keychain,
+  patchReducer: typeof jsonPatchReducer = jsonPatchReducer
 ): PeerStateClient<StateTreeType> {
   const nextState = function (
     state: InternalState<StateTreeType>,
@@ -61,7 +62,7 @@ export const createPeerState = function <StateTreeType>(
     }
     return {
       ...state,
-      peerState: jsonPatchReducer<StateTreeType>(state.peerState, operation),
+      peerState: patchReducer<StateTreeType>(state.peerState, operation),
     };
   };
   const sign = (
