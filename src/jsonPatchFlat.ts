@@ -38,7 +38,6 @@ export const jsonPatchFlat = function <State extends Object>(
         ...a,
         path: [a.path, path].join(DELIMITER),
       }));
-      return [];
     },
     replace: addIsh,
     move: () => {
