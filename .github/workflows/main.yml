@@ -22,8 +22,10 @@ jobs:
     - uses: actions/setup-node@v2-beta
       with:
         node-version: '14'
+    - name: Install
+      run: yarn install --frozen-lockfile:  
     - name: Build
-      run: yarn install --frozen-lockfile
+      run: yarn build
     - name: Publish
       uses: mikeal/merge-release@master
       env:
