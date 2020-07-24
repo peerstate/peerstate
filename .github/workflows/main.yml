@@ -32,7 +32,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
     - name: Switch registry url to github
-      run: export NPM_REGISTRY_URL='https://npm.pkg.github.com/'
+      run: |
+        - export NPM_REGISTRY_URL='https://npm.pkg.github.com/'
+        - git remote rm merge-release
+        - git tag -d `git tag | head -n 1`
     - name: Publish Github Packages
       uses: mikeal/merge-release@master
       env:
