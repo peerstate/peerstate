@@ -31,10 +31,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-        NPM_REGISTRY_URL: "https__//registry.npmjs.org/"
+    - name: Switch registry url to github
+      run: export NPM_REGISTRY_URL='https://npm.pkg.github.com/'
     - name: Publish Github Packages
       uses: mikeal/merge-release@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-        NPM_REGISTRY_URL: "https__//npm.pkg.github.com/"
