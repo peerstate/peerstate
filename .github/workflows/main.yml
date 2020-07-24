@@ -26,18 +26,10 @@ jobs:
       run: yarn install --frozen-lockfile
     - name: Build
       run: yarn build
-    - name: Publish NPM
-      uses: mikeal/merge-release@master
+    - name: Publish
+      uses: brysgo-forks/merge-release@master
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-    - name: Switch registry url to github
-      run: |
-        - export NPM_REGISTRY_URL='https://npm.pkg.github.com/'
-        - git remote rm merge-release
-        - git tag -d `git tag | head -n 1`
-    - name: Publish Github Packages
-      uses: mikeal/merge-release@master
-      env:
+        USE_NPM: true
+        USE_GITHUB: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
