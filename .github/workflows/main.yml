@@ -39,7 +39,7 @@ jobs:
         with:
           path: package.json
           key: ${{ github.sha }}-package-json
-      - uses: "phips28/gh-action-bump-version@master"
+      - uses: "phips28/gh-action-bump-version@v7.1.4"
         with:
           tag-prefix: ""
         env:
