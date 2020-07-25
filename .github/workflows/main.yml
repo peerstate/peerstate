@@ -31,7 +31,7 @@ jobs:
           tag-prefix: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: jgierer12/npm-auth-gpr@master
+      - uses: jgierer12/npm-auth-gpr@v1.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: GPR Publish
