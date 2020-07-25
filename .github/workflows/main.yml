@@ -32,13 +32,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: NPM Publish
-      run: |
-        - npm publish
+      run: npm publish
       env:
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
     - name: GPR Publish
       run: |
-        - 'echo "//npm.pkg.github.com/:_authToken=${NPM_AUTH_TOKEN}" >> .npmrc'
-        - npm publish
+        'echo "//npm.pkg.github.com/:_authToken=${NPM_AUTH_TOKEN}" >> .npmrc'
+        npm publish
       env:
         NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
