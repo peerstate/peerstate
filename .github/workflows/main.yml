@@ -26,10 +26,19 @@ jobs:
       run: yarn install --frozen-lockfile
     - name: Build
       run: yarn build
-    - name: Publish
-      uses: brysgo-forks/merge-release@master
+    - uses: "phips28/gh-action-bump-version@master"
+      with:
+        tag-prefix: ''
       env:
-        USE_NPM: true
-        USE_GITHUB: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: NPM Publish
+      run: |
+        - npm publish
+      env:
         NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+    - name: GPR Publish
+      run: |
+        - "echo "//npm.pkg.github.com/:_authToken=${NPM_AUTH_TOKEN}" >> .npmrc"
+        - npm publish
+      env:
+        NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}:
