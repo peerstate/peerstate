@@ -1,6 +1,6 @@
 {
   "name": "@peerstate/core",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "description": "p2p state management with authentication/authorization/encryption and a drop in key management server",
   "repository": "git@github.com:peerstate/peerstate.git",
   "author": "Bryan Goldstein",
