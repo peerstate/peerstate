@@ -20,7 +20,7 @@
     "browserify-aes": "^1.2.0",
     "deep-entries": "^4.0.2",
     "fast-json-patch": "^3.0.0-1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "keypair": "^1.0.1",
     "path-to-regexp": "^6.1.0",
     "uuid": "^8.3.0"
